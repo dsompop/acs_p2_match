@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบการเทียบหน่วยน้ำหนัก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f4f8;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .option-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .option-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .option-button.selected {
+            border: 2px solid #2563eb;
+            background-color: #eff6ff;
+        }
+        .option-button.correct {
+            background-color: #d1fae5;
+            border-color: #059669;
+        }
+        .option-button.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+        .submit-button {
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #1e40af;
+        }
+        .result-item {
+            border-left: 4px solid;
+            border-radius: 0.5rem;
+        }
+        .result-item.correct {
+            border-color: #16a34a;
+        }
+        .result-item.incorrect {
+            border-color: #dc2626;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex items-center justify-center min-h-screen">
+
+    <div id="quiz-container" class="container mx-auto p-6 md:p-10 card">
+        <h1 class="text-3xl font-bold text-center mb-6">แบบทดสอบการเทียบหน่วยน้ำหนัก</h1>
+        <p class="text-center text-sm text-gray-600 mb-8">เรื่อง: กรัม, กิโลกรัม, และขีด</p>
+
+        <div id="quiz-area" class="space-y-8"></div>
+        <div id="message-box" class="hidden mt-4 p-4 rounded-lg bg-red-100 text-red-700 text-center font-semibold"></div>
+
+        <button id="submit-button" class="mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-300 transform hover:scale-105">
+            ส่งคำตอบ
+        </button>
+
+        <div id="result-area" class="hidden mt-10">
+            <h2 class="text-2xl font-bold text-center mb-6">ผลการทดสอบ</h2>
+            <div id="score-summary" class="text-xl font-semibold text-center mb-6"></div>
+            <div id="answers-summary" class="space-y-6"></div>
+            <button id="restart-button" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-300 transform hover:scale-105">
+                ทำแบบทดสอบใหม่
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: '1 กิโลกรัม เท่ากับกี่ขีด?',
+                options: [
+                    { text: '1 ขีด', correct: false },
+                    { text: '10 ขีด', correct: true },
+                    { text: '100 ขีด', correct: false },
+                    { text: '1,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: '500 กรัม เท่ากับกี่ขีด?',
+                options: [
+                    { text: '5 ขีด', correct: true },
+                    { text: '50 ขีด', correct: false },
+                    { text: '500 ขีด', correct: false },
+                    { text: '0.5 ขีด', correct: false }
+                ]
+            },
+            {
+                question: '1 กิโลกรัม มีกี่กรัม?',
+                options: [
+                    { text: '10 กรัม', correct: false },
+                    { text: '100 กรัม', correct: false },
+                    { text: '1,000 กรัม', correct: true },
+                    { text: '10,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้าซื้อข้าวสาร 3 กิโลกรัม จะเท่ากับกี่กรัม?',
+                options: [
+                    { text: '300 กรัม', correct: false },
+                    { text: '3,000 กรัม', correct: true },
+                    { text: '30 กรัม', correct: false },
+                    { text: '30,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'แม่ซื้อปลามา 4 ขีด ปลาหนักกี่กรัม?',
+                options: [
+                    { text: '40 กรัม', correct: false },
+                    { text: '400 กรัม', correct: true },
+                    { text: '4,000 กรัม', correct: false },
+                    { text: '4,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'เชือกหนัก 2,000 กรัม เชือกหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '2 กิโลกรัม', correct: true },
+                    { text: '20 กิโลกรัม', correct: false },
+                    { text: '200 กิโลกรัม', correct: false },
+                    { text: '0.2 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'นมกล่องหนึ่งหนัก 2 ขีด นมกล่องนี้หนักกี่กรัม?',
+                options: [
+                    { text: '20 กรัม', correct: false },
+                    { text: '200 กรัม', correct: true },
+                    { text: '2,000 กรัม', correct: false },
+                    { text: '2,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: '30 ขีด เท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '3 กิโลกรัม', correct: true },
+                    { text: '30 กิโลกรัม', correct: false },
+                    { text: '0.3 กิโลกรัม', correct: false },
+                    { text: '300 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: '800 กรัม มีกี่ขีด?',
+                options: [
+                    { text: '80 ขีด', correct: false },
+                    { text: '8 ขีด', correct: true },
+                    { text: '800 ขีด', correct: false },
+                    { text: '0.8 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ทุเรียนหนัก 5,000 กรัม จะเท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '50 กิโลกรัม', correct: false },
+                    { text: '500 กิโลกรัม', correct: false },
+                    { text: '5 กิโลกรัม', correct: true },
+                    { text: '0.5 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้าซื้อเนื้อหมู 2 กิโลกรัม จะเท่ากับกี่ขีด?',
+                options: [
+                    { text: '20 ขีด', correct: true },
+                    { text: '200 ขีด', correct: false },
+                    { text: '2 ขีด', correct: false },
+                    { text: '2,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'มะม่วงหนัก 200 กรัม มะม่วงหนักกี่ขีด?',
+                options: [
+                    { text: '20 ขีด', correct: false },
+                    { text: '200 ขีด', correct: false },
+                    { text: '2 ขีด', correct: true },
+                    { text: '0.2 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'มะพร้าวหนัก 1 กิโลกรัม 5 ขีด มะพร้าวหนักทั้งหมดกี่กรัม?',
+                options: [
+                    { text: '1,500 กรัม', correct: true },
+                    { text: '1,005 กรัม', correct: false },
+                    { text: '150 กรัม', correct: false },
+                    { text: '1,500 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ข้าวสาร 30 ขีด จะหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '30 กิโลกรัม', correct: false },
+                    { text: '3 กิโลกรัม', correct: true },
+                    { text: '0.3 กิโลกรัม', correct: false },
+                    { text: '300 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: '1,000 กรัม เท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '1 กิโลกรัม', correct: true },
+                    { text: '10 กิโลกรัม', correct: false },
+                    { text: '100 กิโลกรัม', correct: false },
+                    { text: '1,000 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้าแม่ค้าชั่งส้ม 2,000 กรัม จะเท่ากับกี่ขีด?',
+                options: [
+                    { text: '2 ขีด', correct: false },
+                    { text: '20 ขีด', correct: false },
+                    { text: '200 ขีด', correct: true },
+                    { text: '2,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ปลาหนัก 6,000 กรัม จะเท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '60 กิโลกรัม', correct: false },
+                    { text: '6 กิโลกรัม', correct: true },
+                    { text: '600 กิโลกรัม', correct: false },
+                    { text: '0.6 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'สัปปะรดหนัก 1 กิโลกรัม 2 ขีด สัปปะรดหนักกี่กรัม?',
+                options: [
+                    { text: '1,200 กรัม', correct: true },
+                    { text: '1,020 กรัม', correct: false },
+                    { text: '120 กรัม', correct: false },
+                    { text: '1,200 ขีด', correct: false }
+                ]
+            },
+            {
+                question: '600 กรัม เท่ากับกี่ขีด?',
+                options: [
+                    { text: '6 ขีด', correct: true },
+                    { text: '60 ขีด', correct: false },
+                    { text: '600 ขีด', correct: false },
+                    { text: '0.6 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'พริกหนัก 3 ขีด จะหนักกี่กรัม?',
+                options: [
+                    { text: '30 กรัม', correct: false },
+                    { text: '300 กรัม', correct: true },
+                    { text: '3,000 กรัม', correct: false },
+                    { text: '3,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ถั่วหนัก 2 ขีด 50 กรัม จะหนักทั้งหมดกี่กรัม?',
+                options: [
+                    { text: '250 กรัม', correct: true },
+                    { text: '205 กรัม', correct: false },
+                    { text: '70 กรัม', correct: false },
+                    { text: '250 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ขนมปังหนัก 1 กิโลกรัม ขนมปังหนักกี่ขีด?',
+                options: [
+                    { text: '1 ขีด', correct: false },
+                    { text: '10 ขีด', correct: true },
+                    { text: '100 ขีด', correct: false },
+                    { text: '1,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'มะละกอหนัก 10 ขีด จะหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '1 กิโลกรัม', correct: true },
+                    { text: '10 กิโลกรัม', correct: false },
+                    { text: '0.1 กิโลกรัม', correct: false },
+                    { text: '100 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'แตงโมหนัก 4 กิโลกรัม 500 กรัม จะหนักทั้งหมดกี่กรัม?',
+                options: [
+                    { text: '4,500 กรัม', correct: true },
+                    { text: '4,050 กรัม', correct: false },
+                    { text: '450 กรัม', correct: false },
+                    { text: '45,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: '1 กิโลกรัม 300 กรัม เท่ากับกี่กรัม?',
+                options: [
+                    { text: '1,300 กรัม', correct: true },
+                    { text: '1,003 กรัม', correct: false },
+                    { text: '130 กรัม', correct: false },
+                    { text: '1,300 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ถั่วหนัก 5 ขีด ถั่วหนักกี่กรัม?',
+                options: [
+                    { text: '50 กรัม', correct: false },
+                    { text: '500 กรัม', correct: true },
+                    { text: '5,000 กรัม', correct: false },
+                    { text: '5,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'น้ำตาล 10 ขีด จะเท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '1 กิโลกรัม', correct: true },
+                    { text: '10 กิโลกรัม', correct: false },
+                    { text: '100 กิโลกรัม', correct: false },
+                    { text: '1,000 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มะนาวหนัก 50 กรัม มะนาวหนักกี่ขีด?',
+                options: [
+                    { text: '50 ขีด', correct: false },
+                    { text: '5 ขีด', correct: false },
+                    { text: '0.5 ขีด', correct: true },
+                    { text: '500 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้าซื้อทุเรียน 10 กิโลกรัม จะเท่ากับกี่กรัม?',
+                options: [
+                    { text: '100 กรัม', correct: false },
+                    { text: '1,000 กรัม', correct: false },
+                    { text: '10,000 กรัม', correct: true },
+                    { text: '100,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'กระเทียม 4,000 กรัม เท่ากับกี่กิโลกรัม?',
+                options: [
+                    { text: '4 กิโลกรัม', correct: true },
+                    { text: '40 กิโลกรัม', correct: false },
+                    { text: '400 กิโลกรัม', correct: false },
+                    { text: '0.4 กิโลกรัม', correct: false }
+                ]
+            }
+        ];
+
+        const quizArea = document.getElementById('quiz-area');
+        const submitButton = document.getElementById('submit-button');
+        const resultArea = document.getElementById('result-area');
+        const scoreSummary = document.getElementById('score-summary');
+        const answersSummary = document.getElementById('answers-summary');
+        const restartButton = document.getElementById('restart-button');
+        const messageBox = document.getElementById('message-box');
+
+        let userAnswers = {};
+
+        function renderQuestions() {
+            quizArea.innerHTML = '';
+            questions.forEach((q, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question p-6 card';
+                questionElement.innerHTML = `
+                    <p class="font-semibold text-lg mb-4">ข้อ ${index + 1}. ${q.question}</p>
+                    <div class="options-container space-y-4">
+                        ${q.options.map((option, optIndex) => `
+                            <button
+                                class="option-button w-full text-left p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                data-question-index="${index}"
+                                data-option-index="${optIndex}"
+                            >
+                                ${option.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                quizArea.appendChild(questionElement);
+            });
+
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const questionIndex = e.target.dataset.questionIndex;
+                    const optionIndex = e.target.dataset.optionIndex;
+
+                    document.querySelectorAll(`.option-button[data-question-index="${questionIndex}"]`).forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    e.target.classList.add('selected');
+                    userAnswers[questionIndex] = optionIndex;
+                    messageBox.classList.add('hidden'); // Hide message when user selects an option
+                });
+            });
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            answersSummary.innerHTML = '';
+            resultArea.classList.remove('hidden');
+            quizArea.classList.add('hidden');
+            submitButton.classList.add('hidden');
+            messageBox.classList.add('hidden');
+
+            questions.forEach((q, index) => {
+                const userAnswerIndex = userAnswers[index];
+                const correctAnswerIndex = q.options.findIndex(opt => opt.correct);
+                const isCorrect = parseInt(userAnswerIndex) === correctAnswerIndex;
+
+                if (isCorrect) {
+                    score++;
+                }
+
+                const resultItem = document.createElement('div');
+                resultItem.className = `result-item p-4 border-l-4 rounded-lg shadow-sm ${isCorrect ? 'correct' : 'incorrect'}`;
+                resultItem.innerHTML = `
+                    <h3 class="font-bold flex items-center">
+                        <span class="text-2xl mr-2 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+                            ${isCorrect ? '✔' : '✖'}
+                        </span>
+                        ข้อ ${index + 1}. ${q.question}
+                    </h3>
+                    <p class="mt-2">คำตอบของคุณ: <span class="font-semibold">${userAnswerIndex ? q.options[userAnswerIndex].text : 'ไม่ได้ตอบ'}</span></p>
+                    <p>คำตอบที่ถูกต้อง: <span class="font-semibold text-green-700">${q.options[correctAnswerIndex].text}</span></p>
+                `;
+                answersSummary.appendChild(resultItem);
+            });
+
+            scoreSummary.textContent = `คะแนนของคุณ: ${score} จาก ${questions.length} คะแนน`;
+        }
+
+        submitButton.addEventListener('click', () => {
+            if (Object.keys(userAnswers).length === questions.length) {
+                checkAnswers();
+            } else {
+                messageBox.textContent = 'กรุณาตอบคำถามให้ครบทุกข้อก่อนส่งคำตอบ';
+                messageBox.classList.remove('hidden');
+            }
+        });
+
+        restartButton.addEventListener('click', () => {
+            userAnswers = {};
+            resultArea.classList.add('hidden');
+            quizArea.classList.remove('hidden');
+            submitButton.classList.remove('hidden');
+            messageBox.classList.add('hidden');
+            renderQuestions();
+        });
+
+        // Initialize quiz
+        renderQuestions();
+    </script>
+</body>
+</html>
