@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบทดสอบการเทียบหน่วยน้ำหนัก</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f0f4f8;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .option-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .option-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .option-button.selected {
+            border: 2px solid #2563eb;
+            background-color: #eff6ff;
+        }
+        .option-button.correct {
+            background-color: #d1fae5;
+            border-color: #059669;
+        }
+        .option-button.incorrect {
+            background-color: #fee2e2;
+            border-color: #ef4444;
+        }
+        .submit-button {
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #1e40af;
+        }
+        .result-item {
+            border-left: 4px solid;
+            border-radius: 0.5rem;
+        }
+        .result-item.correct {
+            border-color: #16a34a;
+        }
+        .result-item.incorrect {
+            border-color: #dc2626;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex items-center justify-center min-h-screen">
+
+    <div id="quiz-container" class="container mx-auto p-6 md:p-10 card">
+        <h1 class="text-3xl font-bold text-center mb-6">แบบทดสอบการเทียบหน่วยน้ำหนัก</h1>
+        <p class="text-center text-sm text-gray-600 mb-8">เรื่อง: โจทย์ปัญหาน้ำหนัก: กรัม, กิโลกรัม, และขีด</p>
+
+        <div id="quiz-area" class="space-y-8"></div>
+
+        <button id="submit-button" class="mt-8 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-300 transform hover:scale-105">
+            ส่งคำตอบ
+        </button>
+
+        <div id="result-area" class="hidden mt-10">
+            <h2 class="text-2xl font-bold text-center mb-6">ผลการทดสอบ</h2>
+            <div id="score-summary" class="text-xl font-semibold text-center mb-6"></div>
+            <div id="answers-summary" class="space-y-6"></div>
+            <button id="restart-button" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-300 transform hover:scale-105">
+                ทำแบบทดสอบใหม่
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: 'มีน้ำตาล 8 ขีด และเติมอีก 5 ขีด รวมมีน้ำตาลกี่กิโลกรัม กี่ขีด?',
+                options: [
+                    { text: '1 กิโลกรัม 3 ขีด', correct: true },
+                    { text: '13 ขีด', correct: false },
+                    { text: '1 กิโลกรัม 30 กรัม', correct: false },
+                    { text: '13 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มะม่วงหนัก 2 กิโลกรัม 4 ขีด และส้มหนัก 1,500 กรัม รวมกันหนักกี่กรัม?',
+                options: [
+                    { text: '3,900 กรัม', correct: true },
+                    { text: '3,800 กรัม', correct: false },
+                    { text: '4,000 กรัม', correct: false },
+                    { text: '3,500 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มีข้าวสารอยู่ 8,000 กรัม แบ่งให้เพื่อนไป 10 ขีด จะเหลือข้าวสารกี่กิโลกรัม?',
+                options: [
+                    { text: '7 กิโลกรัม', correct: true },
+                    { text: '70 กิโลกรัม', correct: false },
+                    { text: '8 กิโลกรัม', correct: false },
+                    { text: '9 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ข้าวสาร 2 กระสอบ หนักกระสอบละ 50 กิโลกรัม รวมทั้งหมดเป็นกี่ขีด?',
+                options: [
+                    { text: '100 ขีด', correct: false },
+                    { text: '500 ขีด', correct: false },
+                    { text: '1,000 ขีด', correct: true },
+                    { text: '2,000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ซื้อปลาหนัก 3 กิโลกรัม 700 กรัม และเนื้อไก่หนัก 23 ขีด รวมกันหนักเท่าไหร่ (เป็นกรัม)?',
+                options: [
+                    { text: '5,000 กรัม', correct: false },
+                    { text: '6,000 กรัม', correct: true },
+                    { text: '7,000 กรัม', correct: false },
+                    { text: '6,300 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มีผลไม้ 10 กิโลกรัม ขายไป 50 ขีด เหลือผลไม้กี่กรัม?',
+                options: [
+                    { text: '500 กรัม', correct: false },
+                    { text: '5,000 กรัม', correct: true },
+                    { text: '50,000 กรัม', correct: false },
+                    { text: '500,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มีแป้ง 4,500 กรัม และน้ำตาล 5,500 กรัม รวมกันได้กี่กิโลกรัม?',
+                options: [
+                    { text: '9 กิโลกรัม', correct: false },
+                    { text: '10 กิโลกรัม', correct: true },
+                    { text: '11 กิโลกรัม', correct: false },
+                    { text: '12 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้า 1 กิโลกรัมเท่ากับ 10 ขีด และ 1 ขีดเท่ากับ 100 กรัม แล้ว 30 กิโลกรัมจะเท่ากับกี่กรัม?',
+                options: [
+                    { text: '3,000 กรัม', correct: false },
+                    { text: '30,000 กรัม', correct: true },
+                    { text: '300,000 กรัม', correct: false },
+                    { text: '3,000,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มีปลา 200 ขีด และเนื้อหมู 3 กิโลกรัม รวมกันหนักกี่กรัม?',
+                options: [
+                    { text: '23,000 กรัม', correct: true },
+                    { text: '5,000 กรัม', correct: false },
+                    { text: '5,300 กรัม', correct: false },
+                    { text: '2,300 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ของชิ้นหนึ่งหนัก 12,000 กรัม อีกชิ้นหนึ่งหนัก 100 ขีด รวมกันหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '20 กิโลกรัม', correct: false },
+                    { text: '22 กิโลกรัม', correct: true },
+                    { text: '25 กิโลกรัม', correct: false },
+                    { text: '30 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'กุ้งหนัก 3 กิโลกรัม 500 กรัม และปูหนัก 2 กิโลกรัม 5 ขีด อยากทราบว่าน้ำหนักรวมเป็นกี่กรัม?',
+                options: [
+                    { text: '5,500 กรัม', correct: false },
+                    { text: '6,000 กรัม', correct: true },
+                    { text: '6,500 กรัม', correct: false },
+                    { text: '5,000 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'แม่ซื้อผักมา 1 กิโลกรัม 2 ขีด และซื้อผลไม้มาอีก 1,800 กรัม รวมแล้วมีของหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '3 กิโลกรัม', correct: true },
+                    { text: '2 กิโลกรัม', correct: false },
+                    { text: '4 กิโลกรัม', correct: false },
+                    { text: '5 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ถ้า 1 กิโลกรัมเท่ากับ 10 ขีด และ 1 ขีดเท่ากับ 100 กรัม แล้ว 5 กิโลกรัม 5 ขีด จะเท่ากับกี่กรัม?',
+                options: [
+                    { text: '5,500 กรัม', correct: true },
+                    { text: '5,050 กรัม', correct: false },
+                    { text: '550 กรัม', correct: false },
+                    { text: '5,500 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'พี่หนัก 65 กิโลกรัม และน้องหนัก 32 กิโลกรัม ทั้งสองคนรวมกันหนักกี่ขีด?',
+                options: [
+                    { text: '97 ขีด', correct: false },
+                    { text: '970 ขีด', correct: true },
+                    { text: '9700 ขีด', correct: false },
+                    { text: '97000 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'มีกุ้งแห้ง 1,500 กรัม และปลาหมึกแห้ง 8 ขีด รวมกันหนักกี่กรัม?',
+                options: [
+                    { text: '2,300 กรัม', correct: true },
+                    { text: '1,580 กรัม', correct: false },
+                    { text: '2,000 กรัม', correct: false },
+                    { text: '1,508 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ซื้อหมูมา 5 กิโลกรัม และไก่ 3,000 กรัม รวมเป็นกี่ขีด?',
+                options: [
+                    { text: '53 ขีด', correct: false },
+                    { text: '80 ขีด', correct: true },
+                    { text: '530 ขีด', correct: false },
+                    { text: '800 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'นมกล่อง 2 ลัง หนักลังละ 10 กิโลกรัม เมื่อนำมาแบ่งใส่ถุง ถุงละ 500 กรัม จะได้ทั้งหมดกี่ถุง?',
+                options: [
+                    { text: '40 ถุง', correct: true },
+                    { text: '20 ถุง', correct: false },
+                    { text: '25 ถุง', correct: false },
+                    { text: '50 ถุง', correct: false }
+                ]
+            },
+            {
+                question: 'มีพริกป่น 2 ขีด และพริกสด 1 กิโลกรัม 5 ขีด รวมกันหนักกี่กรัม?',
+                options: [
+                    { text: '1,700 กรัม', correct: true },
+                    { text: '1,520 กรัม', correct: false },
+                    { text: '2,000 กรัม', correct: false },
+                    { text: '1,750 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ซื้อข้าวสารมา 30 กิโลกรัม แบ่งขายไป 200 ขีด และนำไปหุง 1,000 กรัม จะเหลือข้าวสารกี่กิโลกรัม?',
+                options: [
+                    { text: '9 กิโลกรัม', correct: true },
+                    { text: '10 กิโลกรัม', correct: false },
+                    { text: '11 กิโลกรัม', correct: false },
+                    { text: '8 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'มีแตงโมหนัก 4 กิโลกรัม 800 กรัม แบ่งขายไป 20 ขีด จะเหลือแตงโมกี่ขีด?',
+                options: [
+                    { text: '28 ขีด', correct: true },
+                    { text: '32 ขีด', correct: false },
+                    { text: '25 ขีด', correct: false },
+                    { text: '35 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'แม่ค้าซื้อทุเรียนมา 50 ขีด และซื้อเงาะมา 15 กิโลกรัม รวมกันแล้วหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '20 กิโลกรัม', correct: true },
+                    { text: '18 กิโลกรัม', correct: false },
+                    { text: '22 กิโลกรัม', correct: false },
+                    { text: '25 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'คุณตาปลูกมันสำปะหลังได้ 30 กิโลกรัม แบ่งขายไป 120 ขีด และนำไปทำอาหาร 2,500 กรัม จะเหลือมันสำปะหลังกี่กรัม?',
+                options: [
+                    { text: '15,500 กรัม', correct: true },
+                    { text: '16 กิโลกรัม', correct: false },
+                    { text: '14,500 กรัม', correct: false },
+                    { text: '18,500 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'กล่องใบที่หนึ่งหนัก 4 กิโลกรัม 500 กรัม กล่องใบที่สองหนัก 30 ขีด กล่องใบไหนหนักกว่ากัน และหนักกว่ากันกี่กรัม?',
+                options: [
+                    { text: 'กล่องใบที่สองหนักกว่า 1,500 กรัม', correct: false },
+                    { text: 'กล่องใบที่หนึ่งหนักกว่า 1,500 กรัม', correct: true },
+                    { text: 'กล่องใบที่หนึ่งหนักกว่า 150 กรัม', correct: false },
+                    { text: 'กล่องใบที่สองหนักกว่า 150 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ข้าวสารถุงแรกหนัก 20 กิโลกรัม ถุงที่สองหนัก 5,000 กรัม และถุงที่สามหนัก 50 ขีด รวมทั้งหมดหนักกี่กิโลกรัม?',
+                options: [
+                    { text: '25 กิโลกรัม', correct: false },
+                    { text: '30 กิโลกรัม', correct: true },
+                    { text: '35 กิโลกรัม', correct: false },
+                    { text: '40 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ซื้อปลามา 2,000 กรัม และหมู 30 ขีด เมื่อนำมาทำอาหารแล้วน้ำหนักลดลงไป 1,000 กรัม จะเหลือน้ำหนักรวมกี่กิโลกรัม?',
+                options: [
+                    { text: '3 กิโลกรัม', correct: false },
+                    { text: '4 กิโลกรัม', correct: true },
+                    { text: '5 กิโลกรัม', correct: false },
+                    { text: '6 กิโลกรัม', correct: false }
+                ]
+            },
+            {
+                question: 'ผลไม้ชนิด A หนัก 10 กิโลกรัม ผลไม้ชนิด B หนักเป็น 2 เท่าของ A และผลไม้ชนิด C หนัก 5,000 กรัม รวมน้ำหนักทั้งหมดเป็นกี่ขีด?',
+                options: [
+                    { text: '350 ขีด', correct: true },
+                    { text: '300 ขีด', correct: false },
+                    { text: '35 ขีด', correct: false },
+                    { text: '250 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'มีเกลืออยู่ 2,000 กรัม แบ่งใส่ถุงเล็กๆ ถุงละ 5 ขีด จะได้ทั้งหมดกี่ถุง?',
+                options: [
+                    { text: '4 ถุง', correct: true },
+                    { text: '5 ถุง', correct: false },
+                    { text: '40 ถุง', correct: false },
+                    { text: '10 ถุง', correct: false }
+                ]
+            },
+            {
+                question: 'เชือกเส้นหนึ่งหนัก 3 กิโลกรัม ตัดแบ่งออกเป็น 6 ส่วนเท่าๆ กัน แต่ละส่วนจะหนักกี่ขีด?',
+                options: [
+                    { text: '5 ขีด', correct: true },
+                    { text: '10 ขีด', correct: false },
+                    { text: '1 ขีด', correct: false },
+                    { text: '15 ขีด', correct: false }
+                ]
+            },
+            {
+                question: 'ซื้อส้มมา 3 กิโลกรัม และแอปเปิ้ล 12 ขีด อยากทราบว่าส้มหนักกว่าแอปเปิ้ลกี่กรัม?',
+                options: [
+                    { text: '1,800 กรัม', correct: true },
+                    { text: '2,880 กรัม', correct: false },
+                    { text: '4,200 กรัม', correct: false },
+                    { text: '180 กรัม', correct: false }
+                ]
+            },
+            {
+                question: 'รถบรรทุกหนัก 5,000 กิโลกรัม บรรทุกข้าวสารไป 2,500 ขีด และบรรทุกน้ำตาลไป 20 กิโลกรัม รวมน้ำหนักของรถและสิ่งของที่บรรทุกเป็นกี่กิโลกรัม?',
+                options: [
+                    { text: '5,270 กิโลกรัม', correct: true },
+                    { text: '5,250 กิโลกรัม', correct: false },
+                    { text: '5,700 กิโลกรัม', correct: false },
+                    { text: '5,220 กิโลกรัม', correct: false }
+                ]
+            }
+        ];
+
+        const quizArea = document.getElementById('quiz-area');
+        const submitButton = document.getElementById('submit-button');
+        const resultArea = document.getElementById('result-area');
+        const scoreSummary = document.getElementById('score-summary');
+        const answersSummary = document.getElementById('answers-summary');
+        const restartButton = document.getElementById('restart-button');
+
+        let userAnswers = {};
+
+        function renderQuestions() {
+            quizArea.innerHTML = '';
+            questions.forEach((q, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question p-6 card';
+                questionElement.innerHTML = `
+                    <p class="font-semibold text-lg mb-4">ข้อ ${index + 1}. ${q.question}</p>
+                    <div class="options-container space-y-4">
+                        ${q.options.map((option, optIndex) => `
+                            <button
+                                class="option-button w-full text-left p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                data-question-index="${index}"
+                                data-option-index="${optIndex}"
+                            >
+                                ${option.text}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                quizArea.appendChild(questionElement);
+            });
+
+            document.querySelectorAll('.option-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const questionIndex = e.target.dataset.questionIndex;
+                    const optionIndex = e.target.dataset.optionIndex;
+
+                    document.querySelectorAll(`.option-button[data-question-index="${questionIndex}"]`).forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    e.target.classList.add('selected');
+                    userAnswers[questionIndex] = optionIndex;
+                });
+            });
+        }
+
+        function checkAnswers() {
+            let score = 0;
+            questions.forEach((q, index) => {
+                const userAnswerIndex = userAnswers[index];
+                const correctAnswerIndex = q.options.findIndex(opt => opt.correct);
+                const isCorrect = parseInt(userAnswerIndex) === correctAnswerIndex;
+                if (isCorrect) {
+                    score++;
+                }
+            });
+
+            scoreSummary.textContent = `คะแนนของคุณ: ${score} จาก ${questions.length} คะแนน`;
+            answersSummary.innerHTML = '';
+            resultArea.classList.remove('hidden');
+            quizArea.classList.add('hidden');
+            submitButton.classList.add('hidden');
+            
+            // Scroll to the result area after showing it
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            questions.forEach((q, index) => {
+                const userAnswerIndex = userAnswers[index];
+                const correctAnswerIndex = q.options.findIndex(opt => opt.correct);
+                const isCorrect = parseInt(userAnswerIndex) === correctAnswerIndex;
+
+                const resultItem = document.createElement('div');
+                resultItem.className = `result-item p-4 border-l-4 rounded-lg shadow-sm ${isCorrect ? 'correct' : 'incorrect'}`;
+                resultItem.innerHTML = `
+                    <h3 class="font-bold">ข้อ ${index + 1}. ${q.question}</h3>
+                    <p class="mt-2">คำตอบของคุณ: <span class="font-semibold">${userAnswerIndex ? q.options[userAnswerIndex].text : 'ไม่ได้ตอบ'}</span></p>
+                    <p>คำตอบที่ถูกต้อง: <span class="font-semibold text-green-700">${q.options[correctAnswerIndex].text}</span></p>
+                `;
+                answersSummary.appendChild(resultItem);
+            });
+        }
+
+        submitButton.addEventListener('click', () => {
+            if (Object.keys(userAnswers).length === questions.length) {
+                checkAnswers();
+            } else {
+                alert('กรุณาตอบคำถามให้ครบทุกข้อก่อนส่งคำตอบ');
+            }
+        });
+
+        restartButton.addEventListener('click', () => {
+            userAnswers = {};
+            resultArea.classList.add('hidden');
+            quizArea.classList.remove('hidden');
+            submitButton.classList.remove('hidden');
+            renderQuestions();
+        });
+
+        // Initialize quiz
+        renderQuestions();
+    </script>
+</body>
+</html>
