@@ -439,6 +439,9 @@
             });
 
             scoreSummary.textContent = `คะแนนของคุณ: ${score} จาก ${questions.length} คะแนน`;
+            
+            // เพิ่มบรรทัดนี้เพื่อเลื่อนหน้าจอขึ้นไปด้านบนสุด
+            window.scrollTo(0, 0);
         }
 
         submitButton.addEventListener('click', () => {
